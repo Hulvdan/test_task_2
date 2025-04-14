@@ -1,0 +1,40 @@
+---
+version: "3.8"
+
+services:
+  backend:
+    build: .
+    command: sh start.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment: &env
+      SERVICE_SECRET: secret
+      POSTGRES_HOST: db
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL: admin@admin.com
+      DJANGO_SUPERUSER_PASSWORD: admin
+
+  celery:
+    build: .
+    command: celery -A src worker -l INFO
+    depends_on:
+      - db
+      - redis
+    environment: *env
+
+  db:
+    image: postgres:17-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    environment: *env
+
+  redis:
+    image: redis:7.4-alpine
+
+volumes:
+  db_data:
